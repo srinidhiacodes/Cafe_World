@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Caveat, Fredoka, IBM_Plex_Mono, Nunito } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { StoreProvider } from "@/lib/store";
 import "./globals.css";
 
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${fredoka.variable} ${nunito.variable} ${caveat.variable} ${plexMono.variable}`}>
       <body className="min-h-dvh antialiased">
         <StoreProvider>{children}</StoreProvider>
+        <Analytics />
       </body>
     </html>
   );
