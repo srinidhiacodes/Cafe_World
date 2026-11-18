@@ -2,7 +2,6 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { groupByCity } from "./cities";
-import { SAMPLE_CAFES } from "./sample-data";
 import type { Cafe, CityGroup } from "./types";
 
 /**
@@ -56,7 +55,7 @@ function save(data: Saved): string | null {
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [name, setName] = useState<string | null>(null);
-  const [cafes, setCafes] = useState<Cafe[]>(SAMPLE_CAFES);
+  const [cafes, setCafes] = useState<Cafe[]>([]);
 
   useEffect(() => {
     const saved = load();

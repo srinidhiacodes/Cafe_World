@@ -39,6 +39,7 @@ export function AppNav({ right }: { right?: React.ReactNode }) {
               key={t.href}
               href={t.href}
               aria-current={active ? "page" : undefined}
+              data-tour={t.href === "/passport" ? "passport" : undefined}
               className={`rounded-full px-4 py-2 no-underline ${active ? "bg-ink text-cream" : "text-ink hover:bg-berry-pale"}`}
             >
               {t.label}

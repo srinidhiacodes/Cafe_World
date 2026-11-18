@@ -10,7 +10,8 @@ Cafe hoppers forget which cafes they've been to, what they ordered and how it fe
 
 ## What works today (preview)
 
-- **3D globe** (three.js): pastel toon-shaded Earth, puffy clouds, strawberry pins that drop in and bob, dotted arcs between cities in visit order. Drag to spin, scroll or pinch to zoom, tap a pin to fly there.
+- **3D globe** (three.js): pastel toon-shaded Earth, puffy clouds, strawberry pins that drop in and bob. Drag to spin, scroll or pinch to zoom, tap a pin to fly there.
+- **New users start with an empty globe** and a 4-step guided tour (replay it any time from the sidebar).
 - **Pin a cafe:** search (Google Places when a key is set, offline example results otherwise) or paste a Google Maps link, add up to 6 photos (compressed on the device), order, stars, vibe, note and date.
 - **City journal pages:** polaroids that flip in 3D, with Open in Google Maps, edit and delete.
 - **Passport page:** stats and 7 badge stamps.

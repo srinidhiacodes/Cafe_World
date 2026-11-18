@@ -19,7 +19,6 @@ interface GlobeProps {
 }
 
 const PIN = 0xe0607e;
-const ARC = 0xe0607e;
 const D2R = Math.PI / 180;
 
 const vec = (lat: number, lon: number, r = 1) => new THREE.Vector3(...latLonToXYZ(lat, lon, r));
@@ -177,7 +176,7 @@ export default function Globe({
       clouds.add(g);
     });
 
-    // Pins, arcs and labels.
+    // Pins and labels.
     const pinMat = new THREE.MeshLambertMaterial({ color: PIN });
     const shineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const headGeo = new THREE.SphereGeometry(0.034, 24, 24);
@@ -185,10 +184,6 @@ export default function Globe({
     const shineGeo = new THREE.SphereGeometry(0.011, 12, 12);
     const ringGeo = new THREE.RingGeometry(0.02, 0.032, 32);
     let objs: CityObj[] = [];
-    let arcs: { line: THREE.Line; dot: THREE.Mesh; curve: THREE.QuadraticBezierCurve3 }[] = [];
-    const arcMat = new THREE.LineDashedMaterial({ color: ARC, dashSize: 0.012, gapSize: 0.018, transparent: true, opacity: 0.85 });
-    const dotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const dotGeo = new THREE.SphereGeometry(0.012, 12, 12);
     let labelsOn = showLabels;
     let activeSlug: string | null = null;
     let clock = 0;
@@ -254,28 +249,6 @@ export default function Globe({
       o.pin.userData.size = 1 + Math.min(o.city.cafes.length, 10) * 0.05;
     }
 
-    function rebuildArcs(list: CityGroup[]) {
-      arcs.forEach((a) => {
-        globe.remove(a.line, a.dot);
-        a.line.geometry.dispose();
-      });
-      arcs = [];
-      for (let i = 1; i < list.length; i++) {
-        const a = vec(list[i - 1].lat, list[i - 1].lon, 1.005);
-        const b = vec(list[i].lat, list[i].lon, 1.005);
-        const dist = a.distanceTo(b);
-        if (dist < 0.01) continue;
-        const mid = a.clone().add(b).normalize().multiplyScalar(1.005 + dist * 0.45);
-        const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
-        const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(64));
-        const line = new THREE.Line(geo, arcMat);
-        line.computeLineDistances();
-        const dot = new THREE.Mesh(dotGeo, dotMat);
-        globe.add(line, dot);
-        arcs.push({ line, dot, curve });
-      }
-    }
-
     function setCities(list: CityGroup[]) {
       const bySlug = new Map(objs.map((o) => [o.city.slug, o]));
       const next: CityObj[] = [];
@@ -293,7 +266,6 @@ export default function Globe({
         gone.label.remove();
       }
       objs = next;
-      rebuildArcs(list);
     }
 
     // ---- interaction ----
@@ -507,10 +479,6 @@ export default function Globe({
             o.label.tabIndex = -1;
           } else placed.push({ x, y, w: lw });
         });
-      arcs.forEach((a, i) => {
-        const t = reduced ? 0.5 : (clock * 0.25 + i * 0.37) % 1;
-        a.dot.position.copy(a.curve.getPoint(t));
-      });
       renderer.render(scene, camera);
     };
     raf = requestAnimationFrame(frame);

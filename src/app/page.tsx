@@ -3,14 +3,18 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Logo } from "@/components/ui";
+import { groupByCity } from "@/lib/cities";
+import { SAMPLE_CAFES } from "@/lib/sample-data";
 import { useStore } from "@/lib/store";
 
 const Globe = dynamic(() => import("@/components/Globe"), { ssr: false });
 
 export default function Landing() {
   const { cities, name, ready, signIn } = useStore();
+  // Show example pins on the landing globe until the visitor has their own.
+  const demoCities = useMemo(() => groupByCity(SAMPLE_CAFES), []);
   const router = useRouter();
   const [asking, setAsking] = useState(false);
   const [draft, setDraft] = useState("");
@@ -90,7 +94,7 @@ export default function Landing() {
         <div className="relative min-w-0 flex-[1_1_520px]">
           <div className="relative mx-auto aspect-square w-full max-w-[640px]">
             <div className="absolute left-[12%] top-[12%] h-[76%] w-[76%] translate-x-3 translate-y-4 rounded-full bg-[#FFE3EA]" aria-hidden="true" />
-            <Globe cities={cities} className="absolute inset-0" />
+            <Globe cities={cities.length ? cities : demoCities} className="absolute inset-0" />
           </div>
         </div>
       </section>

@@ -40,7 +40,6 @@ Young people (20s) who love cafe hopping and travelling and like cute, aesthetic
   - Pastel toon-shaded Earth: sky-blue oceans, matcha-green land, butter/peach deserts, white poles, soft rim light
   - Puffy 3D clouds orbiting slowly
   - Strawberry teardrop pins with a white dot, which drop in with a bounce and bob gently
-  - Dotted strawberry arcs between cities in visit order
 - **Motion**
   - Drag to spin with inertia, scroll/pinch to zoom, slow auto-rotate when idle
   - Tap a city → camera flies smoothly to it
@@ -68,6 +67,7 @@ Young people (20s) who love cafe hopping and travelling and like cute, aesthetic
 - Buttons: reset view, profile/badges
 - First-visit hint: "Drag to spin · Pinch to zoom · Tap a pin" (fades out)
 - Floating "Pin a cafe" button
+- New users start with an **empty globe** (no example cafes) and a **guided tour** (4 steps: globe, Pin a cafe, journal, passport stamps) that ends by opening "Pin a cafe"; replayable from the sidebar
 - Empty state for new users: "Your globe is waiting… pin your first cafe"
 
 ### 6.3 City sheet (polaroids)
