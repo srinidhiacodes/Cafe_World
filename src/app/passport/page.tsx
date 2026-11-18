@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { AppNav, StampBadge, formatDate } from "@/components/ui";
 import { BADGES } from "@/lib/badges";
 import { computeStats } from "@/lib/cities";
-import { useStore } from "@/lib/store";
+import { useRequireSignIn, useStore } from "@/lib/store";
 
 function monthsAgo(iso: string): number {
   const d = new Date(`${iso}T12:00:00`);
@@ -14,6 +14,7 @@ function monthsAgo(iso: string): number {
 
 export default function PassportPage() {
   const { cafes, name, signOut } = useStore();
+  useRequireSignIn();
   const router = useRouter();
   const s = computeStats(cafes);
   const unlocked = BADGES.filter((b) => b.check(cafes));
@@ -27,8 +28,8 @@ export default function PassportPage() {
         right={
           <button
             type="button"
-            onClick={() => {
-              signOut();
+            onClick={async () => {
+              await signOut();
               router.push("/");
             }}
             className="h-11 rounded-full border-2 border-[#E8D3C0] px-4 text-sm font-extrabold"

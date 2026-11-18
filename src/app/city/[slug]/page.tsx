@@ -11,7 +11,7 @@ import { AppNav, Toast, formatDate } from "@/components/ui";
 import type { Badge } from "@/lib/badges";
 import { citySlug, computeStats } from "@/lib/cities";
 import { formatCoords } from "@/lib/geo";
-import { useStore } from "@/lib/store";
+import { useRequireSignIn, useStore } from "@/lib/store";
 import type { Cafe } from "@/lib/types";
 
 const Globe = dynamic(() => import("@/components/Globe"), { ssr: false });
@@ -23,6 +23,7 @@ export default function CityPage() {
   const [editing, setEditing] = useState<Cafe | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
+  useRequireSignIn();
   const city = cities.find((c) => c.slug === slug);
 
   const onSaved = (cafe: Cafe, unlocked: Badge[]) => {
@@ -105,10 +106,15 @@ export default function CityPage() {
                 cafe={c}
                 index={i}
                 onEdit={setEditing}
-                onDelete={(cafe) => {
-                  deleteCafe(cafe.id);
+                onDelete={async (cafe) => {
+                  const last = city.cafes.length === 1;
+                  const r = await deleteCafe(cafe.id);
+                  if (!r.ok) {
+                    setToast(r.error);
+                    return;
+                  }
                   setToast(`Removed ${cafe.name}`);
-                  if (city.cafes.length === 1) router.push("/globe");
+                  if (last) router.push("/globe");
                 }}
               />
             ))}

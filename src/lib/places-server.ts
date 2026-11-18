@@ -1,24 +1,41 @@
 import "server-only";
 import { nearestKnownCity } from "./geo";
+import { parsePhoton, photonQueryUrl } from "./photon";
 import { SAMPLE_PLACES } from "./sample-data";
 import type { PlaceResult, PlaceSuggestion } from "./types";
 
 /**
- * Google Places (New) is called only from the server, so the API key never
- * reaches the browser. Without GOOGLE_MAPS_API_KEY the app uses a small
- * offline sample list, so it still works in preview.
+ * Cafe search, called only from the server:
+ * - GOOGLE_MAPS_API_KEY set → Google Places (New). The key never reaches the browser.
+ * - otherwise → OpenStreetMap via Photon: free, no key or billing account.
+ * - PLACES_PROVIDER=sample → a small offline list (for tests / no internet).
  */
 const KEY = process.env.GOOGLE_MAPS_API_KEY;
 const BASE = "https://places.googleapis.com/v1";
 
-export const placesMode = (): "google" | "sample" => (KEY ? "google" : "sample");
+export type PlacesMode = "google" | "osm" | "sample";
+export const placesMode = (): PlacesMode => (process.env.PLACES_PROVIDER === "sample" ? "sample" : KEY ? "google" : "osm");
+
+async function osmSearch(query: string): Promise<PlaceSuggestion[]> {
+  const res = await fetch(photonQueryUrl(query), {
+    headers: { "User-Agent": "CafePassport/1.0 (cafe journal web app)", Accept: "application/json" },
+    signal: AbortSignal.timeout(6000),
+    next: { revalidate: 3600 },
+  });
+  if (!res.ok) throw new Error(`OpenStreetMap search failed (${res.status})`);
+  return parsePhoton(await res.json())
+    .slice(0, 6)
+    .map((r) => r.suggestion);
+}
 
 export async function autocomplete(query: string, sessionToken?: string): Promise<PlaceSuggestion[]> {
-  if (!KEY) return sampleSearch(query);
+  const mode = placesMode();
+  if (mode === "sample") return sampleSearch(query);
+  if (mode === "osm") return osmSearch(query);
 
   const res = await fetch(`${BASE}/places:autocomplete`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": KEY },
+    headers: { "Content-Type": "application/json", "X-Goog-Api-Key": KEY! },
     body: JSON.stringify({
       input: query,
       includedPrimaryTypes: ["cafe", "coffee_shop", "bakery", "tea_house"],
@@ -48,12 +65,12 @@ export async function autocomplete(query: string, sessionToken?: string): Promis
 }
 
 export async function placeDetails(id: string, sessionToken?: string): Promise<PlaceResult | null> {
-  if (!KEY) return SAMPLE_PLACES.find((p) => p.id === id) ?? null;
+  if (id.startsWith("sample-") || placesMode() !== "google") return SAMPLE_PLACES.find((p) => p.id === id) ?? null;
 
   const qs = sessionToken ? `?sessionToken=${encodeURIComponent(sessionToken)}` : "";
   const res = await fetch(`${BASE}/places/${encodeURIComponent(id)}${qs}`, {
     headers: {
-      "X-Goog-Api-Key": KEY,
+      "X-Goog-Api-Key": KEY!,
       "X-Goog-FieldMask": "id,displayName,location,addressComponents,googleMapsUri",
     },
     cache: "no-store",

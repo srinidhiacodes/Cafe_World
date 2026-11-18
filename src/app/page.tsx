@@ -12,13 +12,38 @@ import { useStore } from "@/lib/store";
 const Globe = dynamic(() => import("@/components/Globe"), { ssr: false });
 
 export default function Landing() {
-  const { cities, name, ready, signIn } = useStore();
+  const { cities, name, ready, signIn, mode, signedIn, signInWithGoogle, authError } = useStore();
   // Show example pins on the landing globe until the visitor has their own.
   const demoCities = useMemo(() => groupByCity(SAMPLE_CAFES), []);
   const router = useRouter();
   const [asking, setAsking] = useState(false);
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fromGoogle = useRef(false);
+
+  // Coming back from Google: go straight to the globe once the session is ready.
+  useEffect(() => {
+    fromGoogle.current = new URLSearchParams(window.location.search).has("code");
+  }, []);
+  useEffect(() => {
+    if (ready && signedIn && fromGoogle.current) router.replace("/globe");
+  }, [ready, signedIn, router]);
+
+  const startSignIn = async () => {
+    if (mode === "local") {
+      setAsking(true);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const r = await signInWithGoogle();
+    if (!r.ok) {
+      setError(r.error);
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (asking) inputRef.current?.focus();
@@ -38,12 +63,12 @@ export default function Landing() {
           <a href="#how" className="text-ink no-underline hover:text-berry-ink">
             How it works
           </a>
-          {ready && name ? (
+          {ready && signedIn ? (
             <Link href="/globe" className="rounded-full bg-ink px-5 py-3 text-cream no-underline">
               Open my globe
             </Link>
           ) : (
-            <button type="button" onClick={() => setAsking(true)} className="rounded-full bg-ink px-5 py-3 text-cream">
+            <button type="button" onClick={startSignIn} disabled={busy} className="rounded-full bg-ink px-5 py-3 text-cream">
               Sign in
             </button>
           )}
@@ -59,16 +84,18 @@ export default function Landing() {
           <p className="m-0 max-w-[520px] text-lg leading-relaxed text-sub sm:text-[19px]">
             Search a cafe, add your photos as polaroids, write what you ordered, and watch your world fill up with stamps.
           </p>
-          {ready && name ? (
+          {ready && signedIn ? (
             <Link href="/globe" className="inline-flex h-14 items-center self-start rounded-full bg-ink px-7 text-base font-extrabold text-cream no-underline shadow-lg">
-              Welcome back, {name}. Open my globe
+              Welcome back{name ? `, ${name}` : ""}. Open my globe
             </Link>
           ) : (
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => setAsking(true)}
-                className="flex h-14 items-center gap-3 rounded-full bg-paper px-6 text-base font-extrabold shadow-[0_10px_24px_rgba(74,47,39,.14)]"
+                onClick={startSignIn}
+                disabled={busy}
+                aria-busy={busy}
+                className="flex h-14 items-center gap-3 disabled:opacity-70 rounded-full bg-paper px-6 text-base font-extrabold shadow-[0_10px_24px_rgba(74,47,39,.14)]"
               >
                 <svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true">
                   <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z" />
@@ -76,16 +103,23 @@ export default function Landing() {
                   <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z" />
                   <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z" />
                 </svg>
-                Continue with Google
+                {busy ? "Opening Google…" : "Continue with Google"}
               </button>
-              <button type="button" onClick={() => setAsking(true)} className="h-14 rounded-full border-2 border-ink px-6 text-base font-extrabold">
-                Use email instead
-              </button>
+              {mode === "local" && (
+                <button type="button" onClick={() => setAsking(true)} className="h-14 rounded-full border-2 border-ink px-6 text-base font-extrabold">
+                  Use email instead
+                </button>
+              )}
             </div>
+          )}
+          {(error || authError) && (
+            <p role="alert" className="m-0 rounded-2xl bg-berry-pale p-3 text-sm font-bold text-berry-ink">
+              {error || authError}
+            </p>
           )}
           <p className="m-0 text-sm font-semibold text-sub">Free to use · Your passport is private to you</p>
           <ul id="how" className="m-0 flex list-none flex-wrap gap-2.5 p-0" aria-label="How it works">
-            <li className="rounded-2xl bg-sky px-4 py-2.5 text-sm font-extrabold">1 · Search Google Maps</li>
+            <li className="rounded-2xl bg-sky px-4 py-2.5 text-sm font-extrabold">1 · Search for a cafe</li>
             <li className="rounded-2xl bg-berry-soft px-4 py-2.5 text-sm font-extrabold">2 · Add photo polaroids</li>
             <li className="rounded-2xl bg-matcha-soft px-4 py-2.5 text-sm font-extrabold">3 · Collect stamps</li>
           </ul>

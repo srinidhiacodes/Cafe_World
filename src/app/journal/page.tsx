@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { AppNav, DrinkDrawing, TAPE, TILTS, TINTS, formatDate } from "@/components/ui";
-import { useStore } from "@/lib/store";
+import { useRequireSignIn, useStore } from "@/lib/store";
 
 export default function JournalPage() {
   const { cities, ready } = useStore();
+  useRequireSignIn();
   return (
     <main className="mx-auto max-w-[1360px] px-4 sm:px-8">
       <AppNav />

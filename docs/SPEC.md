@@ -21,7 +21,7 @@ Young people (20s) who love cafe hopping and travelling and like cute, aesthetic
 - **Next.js (React) + TypeScript + Tailwind CSS**
 - 3D globe: **three.js** (or `react-three-fiber` / `globe.gl`)
 - Auth + database + photo storage: **Supabase** (Google sign-in, Postgres, Storage)
-- Cafe search: **Google Places API** (see 6.4), with **OpenStreetMap (Nominatim/Photon)** as a free fallback
+- Cafe search: **OpenStreetMap via Photon** by default (free, no key or billing account); **Google Places API** optional if a key is added later (see 6.4)
 - Hosting: **Vercel**
 - UI animations: Framer Motion
 

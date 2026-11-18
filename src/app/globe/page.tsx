@@ -10,7 +10,7 @@ import Tour, { markTourDone, tourDone, type TourStep } from "@/components/Tour";
 import { AppNav, TINTS, Toast, burstConfetti, formatDate } from "@/components/ui";
 import type { Badge } from "@/lib/badges";
 import { citySlug, computeStats, groupByCity } from "@/lib/cities";
-import { useStore } from "@/lib/store";
+import { useRequireSignIn, useStore } from "@/lib/store";
 import { VIBES, type Cafe } from "@/lib/types";
 
 const Globe = dynamic(() => import("@/components/Globe"), { ssr: false });
@@ -46,7 +46,8 @@ const VIBE_BG: Record<string, string> = {
 };
 
 export default function GlobePage() {
-  const { cafes, name, ready, clearExamples } = useStore();
+  const { cafes, name, ready, clearExamples, localToImport, importLocal, dismissImport } = useStore();
+  useRequireSignIn();
   const router = useRouter();
   const [vibe, setVibe] = useState<string | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
@@ -54,6 +55,8 @@ export default function GlobePage() {
   const [toast, setToast] = useState<string | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [touring, setTouring] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const globeBox = useRef<HTMLDivElement>(null);
 
   // First visit: show the guided tour once.
@@ -164,6 +167,35 @@ export default function GlobePage() {
               ))}
             </div>
           </div>
+
+          {localToImport > 0 && (
+            <div className="flex flex-col gap-2.5 rounded-2xl bg-sky p-4">
+              <p className="m-0 text-[14px] font-bold">
+                You have {localToImport} {localToImport === 1 ? "cafe" : "cafes"} saved in this browser from before. Move {localToImport === 1 ? "it" : "them"} into your account?
+              </p>
+              {importError && <p className="m-0 text-[13px] font-bold text-berry-ink">{importError}</p>}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={importing}
+                  onClick={async () => {
+                    setImporting(true);
+                    setImportError(null);
+                    const r = await importLocal();
+                    setImporting(false);
+                    if (r.ok) setToast("Moved into your account!");
+                    else setImportError(r.error);
+                  }}
+                  className="h-10 rounded-full bg-ink px-4 text-[13px] font-extrabold text-cream disabled:opacity-70"
+                >
+                  {importing ? "Moving…" : "Move them"}
+                </button>
+                <button type="button" onClick={dismissImport} className="h-10 rounded-full px-3 text-[13px] font-extrabold text-ink underline">
+                  Not now
+                </button>
+              </div>
+            </div>
+          )}
 
           {ready && cafes.length === 0 && (
             <div className="flex flex-col gap-3 rounded-2xl bg-berry-pale p-4">

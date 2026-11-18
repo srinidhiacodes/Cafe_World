@@ -43,7 +43,7 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
   const [tab, setTab] = useState<"search" | "link">("search");
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
-  const [mode, setMode] = useState<"google" | "sample" | null>(null);
+  const [mode, setMode] = useState<"google" | "osm" | "sample" | null>(null);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [session, setSession] = useState("");
@@ -64,6 +64,7 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
   const [photoMsg, setPhotoMsg] = useState<string | null>(null);
   const [errors, setErrors] = useState<CafeErrors>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Reset whenever the dialog opens.
   useEffect(() => {
@@ -90,6 +91,7 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
     setPhotoMsg(null);
     setErrors({});
     setSaveError(null);
+    setSaving(false);
     window.setTimeout(() => firstRef.current?.focus(), 30);
   }, [open, editing]);
 
@@ -135,7 +137,7 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
         if (!res.ok) throw new Error(data.error);
         setSuggestions(data.suggestions);
         setMode(data.mode);
-        setSearchError(data.suggestions.length ? null : "No cafes found. Try another name, or paste a Google Maps link.");
+        setSearchError(data.suggestions.length ? null : "No cafes found. Try adding the area or city (e.g. “Blue Tokai Indiranagar”), or paste a Google Maps link.");
       } catch (err) {
         if ((err as Error).name !== "AbortError") setSearchError((err as Error).message || "Search isn't working right now.");
       } finally {
@@ -161,6 +163,13 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
 
   const pickSuggestion = async (s: PlaceSuggestion) => {
     setSearchError(null);
+    if (s.place) {
+      // OpenStreetMap results already include the location.
+      applyPlace(s.place);
+      setSuggestions([]);
+      setQuery("");
+      return;
+    }
     try {
       const res = await fetch(`/api/places/details?id=${encodeURIComponent(s.id)}&session=${session}`);
       const data = await res.json();
@@ -219,8 +228,9 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
     setPhotos((p) => [...p, ...out]);
   };
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     const draft = {
       name,
       area,
@@ -259,7 +269,10 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
       mapsUrl: place?.mapsUrl,
       googlePlaceId: place?.id && !place.id.startsWith("sample-") ? place.id : undefined,
     };
-    const result = editing ? updateCafe(cafe) : addCafe(cafe);
+    setSaving(true);
+    setSaveError(null);
+    const result = editing ? await updateCafe(cafe) : await addCafe(cafe);
+    setSaving(false);
     if (!result.ok) {
       setSaveError(result.error);
       return;
@@ -333,7 +346,7 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
                         onClick={() => setTab(t)}
                         className={`rounded-full px-4 py-2 ${tab === t ? "bg-ink text-cream" : ""}`}
                       >
-                        {t === "search" ? "Search Google Maps" : "Paste a Maps link"}
+                        {t === "search" ? "Search" : "Paste a Maps link"}
                       </button>
                     ))}
                   </div>
@@ -380,7 +393,7 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
                           ))}
                           {mode && suggestions.length > 0 && (
                             <li className="border-t border-line px-3 py-2 text-right text-[11.5px] font-bold text-sub">
-                              {mode === "google" ? "Results from Google Maps" : "Example results · add a Google Maps key to search real cafes"}
+                              {mode === "google" ? "Results from Google Maps" : mode === "osm" ? "Results from OpenStreetMap" : "Example results (offline)"}
                             </li>
                           )}
                         </ul>
@@ -566,12 +579,12 @@ export default function PinCafeDialog({ open, onClose, onSaved, editing }: Props
             <button type="button" onClick={onClose} className="h-13 rounded-full px-5 font-extrabold text-sub">
               Cancel
             </button>
-            <button type="submit" className="flex h-13 items-center gap-2.5 rounded-full bg-ink px-7 py-3.5 text-base font-extrabold text-cream shadow-[0_10px_22px_rgba(74,47,39,.25)]">
+            <button type="submit" disabled={saving} aria-busy={saving} className="flex h-13 disabled:opacity-70 items-center gap-2.5 rounded-full bg-ink px-7 py-3.5 text-base font-extrabold text-cream shadow-[0_10px_22px_rgba(74,47,39,.25)]">
               <svg width="16" height="20" viewBox="0 0 24 32" aria-hidden="true">
                 <path d="M12 31s10-11 10-19A10 10 0 0 0 2 12c0 8 10 19 10 19z" fill="#F49AB0" />
                 <circle cx="12" cy="12" r="4" fill="#4A2F27" />
               </svg>
-              {editing ? "Save changes" : "Stamp it on my globe"}
+              {saving ? (photos.some((p) => p.startsWith("data:")) ? "Uploading photos…" : "Saving…") : editing ? "Save changes" : "Stamp it on my globe"}
             </button>
           </div>
         </form>

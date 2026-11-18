@@ -18,8 +18,10 @@ export interface Cafe {
   rating: number;
   vibe: Vibe;
   note: string;
-  /** Compressed photo data URLs (preview) or storage URLs (later, Supabase). */
+  /** Photos to show: compressed data URLs (new or preview mode) or signed URLs (cloud). */
   photos: string[];
+  /** Cloud mode: storage path of each photo, same order as `photos`. */
+  photoPaths?: string[];
   kind: DrinkKind;
   mapsUrl?: string;
   googlePlaceId?: string;
@@ -54,4 +56,6 @@ export interface PlaceSuggestion {
   id: string;
   title: string;
   subtitle: string;
+  /** Present when the search already returned the full place (OpenStreetMap), so no details call is needed. */
+  place?: PlaceResult;
 }
