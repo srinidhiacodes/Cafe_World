@@ -31,7 +31,7 @@ Young people (20s) who love cafe hopping and travelling and like cute, aesthetic
 - **Colours**
   - Page: cream journal paper `#FFF6EC` with a soft dot grid (`#EBD8C6`), cards `#FFFDF8`
   - Text / ink: espresso `#4A2F27`, secondary `#8A6A5C`
-  - Strawberry `#F49AB0` (soft) and `#E0607E` (pins, arcs), link/ink pink `#C24E6B`
+  - Strawberry `#F49AB0` (soft) and `#E0607E` (pins), link/ink pink `#C24E6B`
   - Matcha `#A8D5A2` / `#CDE8C4`, butter `#FFDF8A` / `#FFE7A6`, sky `#BFE3F5`, lilac `#CDB8F0` / `#E3D6F8`
   - Primary buttons: espresso background with cream text
   - Stamp inks: pink `#D94F72`, matcha `#4E8A55`, blue `#3A86B5`, lilac `#7B5CC4`, honey `#B9781A`
